@@ -83,11 +83,12 @@ public class PizzaProducer {
         props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,"192.168.56.101:9092");
         props.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         props.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,StringSerializer.class.getName());
+        props.setProperty(ProducerConfig.ACKS_CONFIG,"0");
 
         // kafkaProducer object creation
         KafkaProducer<String,String>kafkaProducer=new KafkaProducer<>(props);
 
-        sendPizzaMessage(kafkaProducer,topicName,-1,100,1000,100,true);
+        sendPizzaMessage(kafkaProducer,topicName,-1,100,1000,100,false);
         kafkaProducer.close();
     }
 }
