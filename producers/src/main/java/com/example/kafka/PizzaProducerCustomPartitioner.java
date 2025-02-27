@@ -14,8 +14,8 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 
-public class PizzaProducer {
-    public static final Logger logger= LoggerFactory.getLogger(PizzaProducer.class);
+public class PizzaProducerCustomPartitioner {
+    public static final Logger logger= LoggerFactory.getLogger(PizzaProducerCustomPartitioner.class);
 
     public static void sendPizzaMessage(KafkaProducer<String,String>kafkaProducer,String topicName, int iterCount,int interIntervalMillis, int intervalMillis, int intervalCount, boolean sync){
         PizzaMessage pizzaMessage = new PizzaMessage();
@@ -75,7 +75,7 @@ public class PizzaProducer {
     }
 
     public static void main(String[] args) {
-        String topicName="pizza-topic";
+        String topicName="pizza-topic-partitioner";
 
         // kafkaProducer configuration setting
         Properties props=new Properties();
@@ -88,11 +88,15 @@ public class PizzaProducer {
         //batch 세팅
         //props.setProperty(ProducerConfig.BATCH_SIZE_CONFIG,"32000");
         //props.setProperty(ProducerConfig.LINGER_MS_CONFIG,"20");
+        // 파티셔너 세팅
+        props.setProperty("custom.specialKey","P001");
+        props.setProperty(ProducerConfig.PARTITIONER_CLASS_CONFIG,"com.example.kafka.CustomPartitioner");
+
 
         // kafkaProducer object creation
         KafkaProducer<String,String>kafkaProducer=new KafkaProducer<>(props);
 
-        sendPizzaMessage(kafkaProducer,topicName,-1,100,1000,100,false);
+        sendPizzaMessage(kafkaProducer,topicName,-1,100,0,0,true);
         kafkaProducer.close();
     }
 }
