@@ -13,8 +13,8 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
 
-public class ConsumerWakeup {
-    public static final Logger logger= LoggerFactory.getLogger(ConsumerWakeup.class);
+public class ConsumerWakeupV2 {
+    public static final Logger logger= LoggerFactory.getLogger(ConsumerWakeupV2.class);
 
     public static void main(String[] args) {
         String topicName = "pizza-topic";
@@ -23,10 +23,8 @@ public class ConsumerWakeup {
         props.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "192.168.56.101:9092");
         props.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         props.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-     //   props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "group-01");
-        props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "group-01-static");
-        props.setProperty(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG,"3");
-
+        props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "group-02");
+        props.setProperty(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG,"60000");
 
         KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(props);
         kafkaConsumer.subscribe(List.of(topicName));
@@ -48,14 +46,24 @@ public class ConsumerWakeup {
             }
         });
 
+        int loopCnt=0;
+
         try{
             while (true) {
                 ConsumerRecords<String, String> consumerRecords = kafkaConsumer.poll(Duration.ofMillis(1000));
 
+                logger.info("### loop cnt :{} consumer records count :{}",loopCnt,consumerRecords.count());
                 for (ConsumerRecord record : consumerRecords) {
                     logger.info("record key:{}, record value:{}, partition:{}, recordOffset:{}",
                             record.key(), record.value(), record.partition(),record.offset());
                 }
+                try{
+                    logger.info("main thread is sleeping {} ms during while loop",loopCnt*10000);
+                    Thread.sleep(loopCnt* 10000L);
+                }catch (InterruptedException e){
+                    e.printStackTrace();
+                }
+                loopCnt+=1;
             }
         }catch (WakeupException e){
             logger.error("wakeup exception has been called");
