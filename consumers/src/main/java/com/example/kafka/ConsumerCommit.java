@@ -1,6 +1,7 @@
 package com.example.kafka;
 
 import org.apache.kafka.clients.consumer.*;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
@@ -8,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 public class ConsumerCommit {
@@ -45,8 +47,10 @@ public class ConsumerCommit {
         });
 
        // pollAutoCommit(kafkaConsumer);
-        pollCommitSync(kafkaConsumer);
+        //pollCommitSync(kafkaConsumer);
+        pollCommitAsync(kafkaConsumer);
     }
+
 
 
 
@@ -95,6 +99,34 @@ public class ConsumerCommit {
         }catch (WakeupException e){
             logger.error("wakeup exception has been called");
         }finally {
+            logger.info("finally consumer is closing");
+            kafkaConsumer.close();
+        }
+    }
+
+    private static void pollCommitAsync(KafkaConsumer<String, String> kafkaConsumer) {
+        try{
+            while (true) {
+                ConsumerRecords<String, String> consumerRecords = kafkaConsumer.poll(Duration.ofMillis(1000));
+
+                for (ConsumerRecord record : consumerRecords) {
+                    logger.info("record key:{}, record value:{}, partition:{}, recordOffset:{}",
+                            record.key(), record.value(), record.partition(),record.offset());
+                }
+
+                kafkaConsumer.commitAsync(new OffsetCommitCallback() {
+                    @Override
+                    public void onComplete(Map<TopicPartition, OffsetAndMetadata> offsets, Exception exception) {
+                        if(exception!=null){
+                            logger.error("offsets {} is not completed, error:{}",offsets,exception);
+                        }
+                    }
+                });
+            }
+        }catch (WakeupException e){
+            logger.error("wakeup exception has been called");
+        }finally {
+            kafkaConsumer.commitSync();
             logger.info("finally consumer is closing");
             kafkaConsumer.close();
         }
