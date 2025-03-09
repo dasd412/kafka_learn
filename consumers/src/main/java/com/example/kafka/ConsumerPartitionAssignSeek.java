@@ -49,10 +49,11 @@ public class ConsumerPartitionAssignSeek {
                 }
             }
         });
-        pollCommitSync(kafkaConsumer);
+
+        pollNoCommit(kafkaConsumer);
     }
 
-    private static void pollCommitSync(KafkaConsumer<String, String> kafkaConsumer) {
+    private static void pollNoCommit(KafkaConsumer<String, String> kafkaConsumer) {
         try {
             while (true) {
                 ConsumerRecords<String, String> consumerRecords = kafkaConsumer.poll(Duration.ofMillis(1000));
@@ -60,15 +61,6 @@ public class ConsumerPartitionAssignSeek {
                 for (ConsumerRecord record : consumerRecords) {
                     logger.info("record key:{}, record value:{}, partition:{}, recordOffset:{}",
                             record.key(), record.value(), record.partition(), record.offset());
-                }
-
-                try {
-                    if (consumerRecords.count() > 0) {
-                        kafkaConsumer.commitSync();
-                        logger.info("commit sync");
-                    }
-                } catch (CommitFailedException e) {
-                    logger.error(e.getMessage());
                 }
             }
         } catch (WakeupException e) {
@@ -78,5 +70,4 @@ public class ConsumerPartitionAssignSeek {
             kafkaConsumer.close();
         }
     }
-
 }
